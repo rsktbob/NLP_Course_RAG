@@ -138,106 +138,47 @@ def vector_rank(
     return scored[:limit]
 
 
-def detect_intent(query: str) -> str:
-    lowered = query.lower()
-    if any(term in lowered for term in ("專題", "報告", "github", "測資", "分組", "繳交")):
-        return "project"
-    if any(term in lowered for term in ("學習活動", "練習", "問卷", "smartypantspal")):
-        return "activity"
-    if any(
-        term in lowered
-        for term in (
-            "期中",
-            "期末",
-            "考試",
-            "範圍",
-            "地點",
-            "時間",
-            "評分",
-            "比例",
-            "出席",
-            "加選",
-            "email",
-            "office",
-            "老師",
-            "助教",
-        )
-    ):
-        return "admin"
-    return "concept"
-
-
-def metadata_multiplier(intent: str, chunk: Chunk) -> float:
-    if intent == "project":
-        return {"project": 2.0, "course_info": 1.2, "announcement": 1.1, "lecture": 0.85}.get(
-            chunk.category, 1.0
-        )
-    if intent == "activity":
-        return {"activity": 1.45, "course_info": 1.1}.get(chunk.category, 1.0)
-    if intent == "admin":
-        return {"course_info": 1.35, "announcement": 1.3, "project": 1.15, "activity": 1.15}.get(
-            chunk.category, 0.95
-        )
-    return {"lecture": 1.08, "announcement": 0.95}.get(chunk.category, 1.0)
-
-
-def hybrid_search(
+def rerank_search(
     conn: sqlite3.Connection,
     query: str,
-    embedder: Callable[[str], list[float]] | None,
-    top_k: int = 8,
-    candidate_k: int = 40,
+    embedder: Callable[[str], list[float]],
+    reranker: Callable[[str, list[str]], list[float]],
+    top_k: int = 3,
+    candidate_k: int = 30,
 ) -> list[SearchResult]:
     chunks = load_chunks(conn)
     by_id = {chunk.id: chunk for chunk in chunks}
     bm25 = bm25_rank(query, chunks, candidate_k)
     vector = vector_rank(query, chunks, embedder, candidate_k)
 
-    combined: dict[int, float] = {}
     bm25_ranks = {chunk_id: rank for rank, (chunk_id, _) in enumerate(bm25, start=1)}
     vector_ranks = {chunk_id: rank for rank, (chunk_id, _) in enumerate(vector, start=1)}
 
-    for rank, (chunk_id, _) in enumerate(bm25, start=1):
-        combined[chunk_id] = combined.get(chunk_id, 0.0) + 1.15 / (60 + rank)
-    for rank, (chunk_id, _) in enumerate(vector, start=1):
-        combined[chunk_id] = combined.get(chunk_id, 0.0) + 1.0 / (60 + rank)
+    candidate_ids: list[int] = []
+    seen: set[int] = set()
+    for ranked in (bm25, vector):
+        for chunk_id, _ in ranked:
+            if chunk_id not in seen:
+                seen.add(chunk_id)
+                candidate_ids.append(chunk_id)
 
-    intent = detect_intent(query)
-    query_terms = token_counts(query)
-    for chunk_id, score in list(combined.items()):
-        chunk = by_id[chunk_id]
-        coverage = 0.0
-        if query_terms:
-            matched = sum(1 for term in query_terms if term in chunk.tokens)
-            coverage = matched / len(query_terms)
-        boosted = score * metadata_multiplier(intent, chunk) * (1.0 + 0.75 * coverage)
+    passages = [
+        f"{by_id[chunk_id].filename} | {by_id[chunk_id].title}\n{by_id[chunk_id].text}"
+        for chunk_id in candidate_ids
+    ]
+    rerank_scores = reranker(query, passages)
+    if len(rerank_scores) != len(candidate_ids):
+        raise ValueError("Reranker returned an unexpected number of scores.")
 
-        text = chunk.text
-        if "期末考" in query and "期末考" in text:
-            if any(marker in query for marker in ("時間", "地點", "範圍")) and any(
-                marker in text for marker in ("地點", "範圍", "14:10", "16:00")
-            ):
-                boosted *= 1.8
-        if "期中考" in query and "期中考" in text:
-            if any(marker in query for marker in ("時間", "地點", "範圍")) and any(
-                marker in text for marker in ("地點", "範圍", "14:10", "16:00")
-            ):
-                boosted *= 1.8
-        if any(marker in query for marker in ("是什麼", "what is", "definition")):
-            if chunk.page_start <= 3 and coverage >= 0.2:
-                boosted *= 1.35
-
-        combined[chunk_id] = boosted
-
-    ranked_ids = sorted(combined, key=lambda chunk_id: combined[chunk_id], reverse=True)
+    ranked = sorted(zip(candidate_ids, rerank_scores), key=lambda item: item[1], reverse=True)
     return [
         SearchResult(
             chunk=by_id[chunk_id],
-            score=combined[chunk_id],
+            score=score,
             bm25_rank=bm25_ranks.get(chunk_id),
             vector_rank=vector_ranks.get(chunk_id),
         )
-        for chunk_id in ranked_ids[:top_k]
+        for chunk_id, score in ranked[:top_k]
     ]
 
 

@@ -4,7 +4,8 @@ import sqlite3
 from dataclasses import dataclass
 
 from .ollama_client import OllamaClient
-from .retriever import ContextBlock, SearchResult, build_context, hybrid_search
+from .reranker import get_reranker
+from .retriever import ContextBlock, SearchResult, build_context, rerank_search
 from .text import normalize_traditional
 
 
@@ -45,20 +46,22 @@ def answer_question(
     client: OllamaClient,
     embed_model: str,
     chat_model: str,
-    top_k: int = 8,
-    context_window: int = 1,
-    use_vector: bool = True,
-    use_llm: bool = True,
+    rerank_model: str,
+    top_k: int = 3,
+    candidate_k: int = 30,
+    context_window: int = 0,
 ) -> Answer:
-    embedder = (lambda text: client.embed(embed_model, text)) if use_vector else None
-    results = hybrid_search(conn, question, embedder=embedder, top_k=top_k)
+    embedder = lambda text: client.embed(embed_model, text)
+    reranker = get_reranker(rerank_model)
+    results = rerank_search(
+        conn,
+        question,
+        embedder=embedder,
+        reranker=reranker.score,
+        top_k=top_k,
+        candidate_k=candidate_k,
+    )
     sources = build_context(conn, results, window=context_window)
-
-    if not use_llm:
-        source_text = "\n".join(
-            f"- [{source.label}] {source.citation}: {source.text[:180]}..." for source in sources
-        )
-        return Answer(question=question, text=source_text or "No sources found.", sources=sources, results=results)
 
     context = format_context(sources)
     user_prompt = f"""問題：

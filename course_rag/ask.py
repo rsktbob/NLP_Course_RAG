@@ -6,12 +6,14 @@ import sys
 
 from .ollama_client import OllamaClient, OllamaError
 from .qa import answer_question
+from .reranker import RerankerError
 from .store import connect
 
 
 DEFAULT_DB = "storage/course_rag.sqlite"
 DEFAULT_EMBED_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "bge-m3")
 DEFAULT_CHAT_MODEL = os.environ.get("OLLAMA_CHAT_MODEL", "qwen2.5:7b")
+DEFAULT_RERANK_MODEL = os.environ.get("RERANK_MODEL", "BAAI/bge-reranker-v2-m3")
 DEFAULT_OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
 
@@ -40,20 +42,20 @@ def ask_once(args, question: str) -> None:
             client=client,
             embed_model=args.embed_model,
             chat_model=args.chat_model,
+            rerank_model=args.rerank_model,
             top_k=args.top_k,
+            candidate_k=args.candidate_k,
             context_window=args.context_window,
-            use_vector=not args.no_vector,
-            use_llm=not args.no_llm,
         )
-    except OllamaError as exc:
+    except (OllamaError, RerankerError) as exc:
         raise SystemExit(
-            f"\nOllama request failed: {exc}\n"
-            f"Check that Ollama is running and models are pulled:\n"
+            f"\nRAG request failed: {exc}\n"
+            f"Check dependencies and Ollama models:\n"
+            f"  python -m pip install -r requirements.txt\n"
             f"  ollama pull {args.embed_model}\n"
             f"  ollama pull {args.chat_model}\n"
-            f"For retrieval-only testing, use --no-vector --no-llm.\n"
         ) from exc
-    print_answer(answer, args.show_sources or args.no_llm)
+    print_answer(answer, args.show_sources)
 
 
 def main() -> None:
@@ -64,10 +66,10 @@ def main() -> None:
     parser.add_argument("--ollama-host", default=DEFAULT_OLLAMA_HOST, help="Ollama host URL.")
     parser.add_argument("--embed-model", default=DEFAULT_EMBED_MODEL, help="Ollama embedding model.")
     parser.add_argument("--chat-model", default=DEFAULT_CHAT_MODEL, help="Ollama chat model.")
-    parser.add_argument("--top-k", type=int, default=8, help="Number of retrieved chunks.")
-    parser.add_argument("--context-window", type=int, default=1, help="Neighbor pages to include around hits.")
-    parser.add_argument("--no-vector", action="store_true", help="Use BM25 only.")
-    parser.add_argument("--no-llm", action="store_true", help="Show retrieved sources without generation.")
+    parser.add_argument("--rerank-model", default=DEFAULT_RERANK_MODEL, help="Hugging Face reranker model.")
+    parser.add_argument("--candidate-k", type=int, default=30, help="Candidates from each retriever.")
+    parser.add_argument("--top-k", type=int, default=3, help="Number of reranked chunks.")
+    parser.add_argument("--context-window", type=int, default=0, help="Neighbor pages to include around hits.")
     parser.add_argument("--show-sources", action="store_true", help="Print source citations after the answer.")
     args = parser.parse_args()
 

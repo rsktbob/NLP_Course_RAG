@@ -9,12 +9,14 @@ from pathlib import Path
 
 from .ollama_client import OllamaClient, OllamaError
 from .qa import answer_question
+from .reranker import RerankerError
 from .store import connect
 
 
 DEFAULT_DB = "storage/course_rag.sqlite"
 DEFAULT_EMBED_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "bge-m3")
 DEFAULT_CHAT_MODEL = os.environ.get("OLLAMA_CHAT_MODEL", "qwen2.5:7b")
+DEFAULT_RERANK_MODEL = os.environ.get("RERANK_MODEL", "BAAI/bge-reranker-v2-m3")
 DEFAULT_OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 _CITATION_RANGE_RE = re.compile(r"\s*\[S\d+\]\s*(?:至|到|~|-|–|—)\s*\[S\d+\]")
 _CITATION_WITH_LABEL_RE = re.compile(r"\s*\[(?:來源|Source)\s*:\s*S\d+\]", re.IGNORECASE)
@@ -55,8 +57,10 @@ def main() -> None:
     parser.add_argument("--ollama-host", default=DEFAULT_OLLAMA_HOST, help="Ollama host URL.")
     parser.add_argument("--embed-model", default=DEFAULT_EMBED_MODEL, help="Ollama embedding model.")
     parser.add_argument("--chat-model", default=DEFAULT_CHAT_MODEL, help="Ollama chat model.")
-    parser.add_argument("--top-k", type=int, default=8, help="Number of retrieved chunks.")
-    parser.add_argument("--context-window", type=int, default=1, help="Neighbor pages to include around hits.")
+    parser.add_argument("--rerank-model", default=DEFAULT_RERANK_MODEL, help="Hugging Face reranker model.")
+    parser.add_argument("--candidate-k", type=int, default=30, help="Candidates from each retriever.")
+    parser.add_argument("--top-k", type=int, default=3, help="Number of reranked chunks.")
+    parser.add_argument("--context-window", type=int, default=0, help="Neighbor pages to include around hits.")
     parser.add_argument("--limit", type=int, help="Only process the first N questions.")
     parser.add_argument("--include-sources", action="store_true", help="Add a source citation column to the CSV.")
     parser.add_argument("--keep-citations", action="store_true", help="Keep [S1] markers inside answers.")
@@ -86,20 +90,23 @@ def main() -> None:
                     client=client,
                     embed_model=args.embed_model,
                     chat_model=args.chat_model,
+                    rerank_model=args.rerank_model,
                     top_k=args.top_k,
+                    candidate_k=args.candidate_k,
                     context_window=args.context_window,
                 )
                 answer_text = answer.text if args.keep_citations else strip_citations(answer.text)
                 if args.include_sources:
                     writer.writerow(
-                        [answer_text, "; ".join(source.citation for source in answer.sources)]
+                        [question, answer_text, "; ".join(source.citation for source in answer.sources)]
                     )
                 else:
-                    writer.writerow([answer_text])
-    except OllamaError as exc:
+                    writer.writerow([question, answer_text])
+    except (OllamaError, RerankerError) as exc:
         raise SystemExit(
-            f"\nOllama request failed: {exc}\n"
-            f"Check models:\n"
+            f"\nRAG request failed: {exc}\n"
+            f"Check dependencies and Ollama models:\n"
+            f"  python -m pip install -r requirements.txt\n"
             f"  ollama pull {args.embed_model}\n"
             f"  ollama pull {args.chat_model}\n"
         ) from exc
