@@ -155,16 +155,10 @@ System Prompt 要求：
 
 ## 九、主要操作指令
 
-一般套件安裝：
+套件安裝：
 
 ```powershell
 python -m pip install -r requirements.txt
-```
-
-CUDA 套件安裝：
-
-```powershell
-python -m pip install -r requirements-cuda.txt
 ```
 
 建立索引：
