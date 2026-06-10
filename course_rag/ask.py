@@ -11,7 +11,7 @@ from .store import connect
 
 DEFAULT_DB = "storage/course_rag.sqlite"
 DEFAULT_EMBED_MODEL = os.environ.get("OLLAMA_EMBED_MODEL", "bge-m3")
-DEFAULT_CHAT_MODEL = os.environ.get("OLLAMA_CHAT_MODEL", "qwen3.5:9b")
+DEFAULT_CHAT_MODEL = os.environ.get("OLLAMA_CHAT_MODEL", "qwen2.5:7b")
 DEFAULT_OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
 
@@ -23,10 +23,9 @@ def configure_output() -> None:
 
 
 def print_answer(answer, show_sources: bool) -> None:
-    print("\n回答：")
     print(answer.text)
     if show_sources:
-        print("\n來源：")
+        print()
         for source in answer.sources:
             print(f"- [{source.label}] {source.citation}")
 

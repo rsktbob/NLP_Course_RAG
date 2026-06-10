@@ -8,7 +8,7 @@
 PDF pages
 -> page-level chunks + metadata
 -> BM25 tokens + Ollama embeddings
--> hybrid retrieval
+-> Weighted RRF hybrid retrieval
 -> neighbor page context
 -> Ollama chat answer with citations
 ```
@@ -26,25 +26,21 @@ $env:OLLAMA_CHAT_MODEL="qwen2.5:7b"
 $env:OLLAMA_HOST="http://localhost:11434"
 ```
 
-## 安裝
+## 環境
 
-先安裝 Python 套件：
+可使用python -m venv venv創造虛擬環境
+
+環境安裝完成後，安裝 Python 套件：
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-如果 Windows 找不到 `python`，可以改用 `py`：
-
-```powershell
-py -m pip install -r requirements.txt
-```
-
-確認 Ollama 已啟動，並下載模型：
+下載玩ollama後。確認 Ollama 已啟動，並下載模型：
 
 ```powershell
 ollama pull bge-m3
-ollama pull qwen3.5:9b
+ollama pull qwen2.5:7b
 ```
 
 ## 建立索引
@@ -52,57 +48,26 @@ ollama pull qwen3.5:9b
 在本資料夾執行：
 
 ```powershell
-python -m course_rag.ingest --data-dir . --reset
-```
-
-如果教材 PDF 放在子資料夾，例如目前的 `自然語言課程資訊`，可以明確指定：
-
-```powershell
 python -m course_rag.ingest --data-dir "自然語言課程資訊" --reset
 ```
 
-如果還沒安裝 Ollama 或 embedding model，可以先建立 BM25-only 測試索引：
-
-```powershell
-python -m course_rag.ingest --data-dir . --reset --no-embeddings
-```
-
-目前不用 Ollama 的測試索引建議用：
-
-```powershell
-python -m course_rag.ingest --data-dir "自然語言課程資訊" --reset --no-embeddings
-```
-
-## 單題問答
-
-```powershell
-python -m course_rag.ask "期末專題怎麼評分？" --show-sources
-```
-
-沒有 Ollama 時可以先測檢索結果：
-
-```powershell
-python -m course_rag.ask "期末專題怎麼評分？" --no-vector --no-llm
-```
-
-互動模式：
-
-```powershell
-python -m course_rag.ask --show-sources
-```
+建立索引時一定會使用 Ollama embedding model，請先確認 Ollama 已啟動且已下載 `bge-m3`。
 
 ## CSV 批次答題
 
-輸入 CSV 可以有 `題目` 欄位；如果沒有 header，系統會使用第一欄當題目。
+輸入 CSV 不包含標題列，每一列直接寫一個問題：
+
+```csv
+期末專題怎麼評分？
+學習活動至少要完成幾次？
+期末考的時間、地點和範圍是什麼？
+```
 
 ```powershell
 python -m course_rag.batch_answer --input questions.csv --output answers.csv
 ```
 
-輸出會包含：
-
-- `題目`
-- `答案`
+輸出不包含標題列與原始題目，每一列只會寫入答案。
 
 如果需要另外輸出來源欄位，可加上：
 
@@ -110,9 +75,12 @@ python -m course_rag.batch_answer --input questions.csv --output answers.csv
 python -m course_rag.batch_answer --input questions.csv --output answers.csv --include-sources
 ```
 
+此時每一列會依序寫入答案與來源，同樣不包含標題列。
+
 ## 目前設計重點
 
 - 中文與英文混合 BM25 tokenization。
+- BM25 與 embedding 各召回前 40 條，使用 Weighted RRF 合併排序。
 - 對課務問題加權：課程介紹、學習活動、期末專題、Announcement 會被優先檢索。
 - 每個答案都要求標示 `[S1]` 這種來源引用。
 - 資料庫放在 `storage/course_rag.sqlite`。

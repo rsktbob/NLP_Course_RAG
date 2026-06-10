@@ -58,7 +58,6 @@ def main() -> None:
     parser.add_argument("--ollama-host", default=DEFAULT_OLLAMA_HOST, help="Ollama host URL.")
     parser.add_argument("--embed-model", default=DEFAULT_EMBED_MODEL, help="Ollama embedding model.")
     parser.add_argument("--reset", action="store_true", help="Reset the database before ingesting.")
-    parser.add_argument("--no-embeddings", action="store_true", help="Build a BM25-only index.")
     args = parser.parse_args()
 
     data_dir = Path(args.data_dir)
@@ -82,8 +81,7 @@ def main() -> None:
                 print(f"Skipping missing PDF: {pdf}")
                 continue
             doc, chunks = load_pdf(pdf)
-            if not args.no_embeddings:
-                chunks = embed_chunks(client, args.embed_model, chunks)
+            chunks = embed_chunks(client, args.embed_model, chunks)
             count = store_document(conn, doc, chunks)
             total_chunks += count
             print(f"Indexed {pdf.name}: {count} chunks")
@@ -92,7 +90,6 @@ def main() -> None:
             f"\nOllama embedding failed: {exc}\n"
             f"Make sure Ollama is running and the model is available:\n"
             f"  ollama pull {args.embed_model}\n"
-            f"Or build a BM25-only index with --no-embeddings.\n"
         ) from exc
 
     stats = database_stats(conn)

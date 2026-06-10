@@ -28,30 +28,13 @@ def configure_output() -> None:
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 
-def read_questions(path: Path, question_column: str | None) -> list[dict[str, str]]:
+def read_questions(path: Path) -> list[str]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        sample = handle.read(2048)
-        handle.seek(0)
-        try:
-            has_header = csv.Sniffer().has_header(sample) if sample else False
-        except csv.Error:
-            has_header = False
-        if has_header:
-            reader = csv.DictReader(handle)
-            rows = list(reader)
-            if not rows:
-                return []
-            column = question_column or ("題目" if "題目" in rows[0] else reader.fieldnames[0])
-            for row in rows:
-                row["_question"] = row.get(column, "")
-            return rows
-
         reader = csv.reader(handle)
-        rows = []
-        for row in reader:
-            if row:
-                rows.append({"題目": row[0], "_question": row[0]})
-        return rows
+        questions = [row[0].strip() for row in reader if row and row[0].strip()]
+    if questions and questions[0] == "題目":
+        raise ValueError("Input CSV must not contain a 題目 header. Write questions directly.")
+    return questions
 
 
 def strip_citations(text: str) -> str:
@@ -68,7 +51,6 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Answer a CSV of questions with the course RAG system.")
     parser.add_argument("--input", required=True, help="Input CSV path.")
     parser.add_argument("--output", required=True, help="Output CSV path.")
-    parser.add_argument("--question-column", help="Question column name. Defaults to 題目 or first column.")
     parser.add_argument("--db", default=DEFAULT_DB, help="SQLite database path.")
     parser.add_argument("--ollama-host", default=DEFAULT_OLLAMA_HOST, help="Ollama host URL.")
     parser.add_argument("--embed-model", default=DEFAULT_EMBED_MODEL, help="Ollama embedding model.")
@@ -82,27 +64,22 @@ def main() -> None:
 
     input_path = Path(args.input)
     output_path = Path(args.output)
-    rows = read_questions(input_path, args.question_column)
+    try:
+        questions = read_questions(input_path)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     if args.limit:
-        rows = rows[: args.limit]
+        questions = questions[: args.limit]
 
     conn = connect(args.db)
     client = OllamaClient(args.ollama_host)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    fieldnames = [name for name in rows[0].keys() if name != "_question"] if rows else ["題目"]
-    if "答案" not in fieldnames:
-        fieldnames.append("答案")
-    if args.include_sources and "來源" not in fieldnames:
-        fieldnames.append("來源")
-
     try:
         with output_path.open("w", encoding="utf-8-sig", newline="") as handle:
-            writer = csv.DictWriter(handle, fieldnames=fieldnames)
-            writer.writeheader()
-            for index, row in enumerate(rows, start=1):
-                question = row.get("_question", "").strip()
-                print(f"[{index}/{len(rows)}] {question}")
+            writer = csv.writer(handle)
+            for index, question in enumerate(questions, start=1):
+                print(f"[{index}/{len(questions)}] {question}")
                 answer = answer_question(
                     conn,
                     question,
@@ -112,13 +89,13 @@ def main() -> None:
                     top_k=args.top_k,
                     context_window=args.context_window,
                 )
-                row["答案"] = answer.text if args.keep_citations else strip_citations(answer.text)
+                answer_text = answer.text if args.keep_citations else strip_citations(answer.text)
                 if args.include_sources:
-                    row["來源"] = "; ".join(source.citation for source in answer.sources)
+                    writer.writerow(
+                        [answer_text, "; ".join(source.citation for source in answer.sources)]
+                    )
                 else:
-                    row.pop("來源", None)
-                row.pop("_question", None)
-                writer.writerow({name: row.get(name, "") for name in fieldnames})
+                    writer.writerow([answer_text])
     except OllamaError as exc:
         raise SystemExit(
             f"\nOllama request failed: {exc}\n"

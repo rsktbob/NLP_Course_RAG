@@ -1,51 +1,25 @@
-﻿題目,答案,來源
-期末專題怎麼評分？,"自然語言處理期末專題的評分方式如下：
-- 測資準確度佔80%，測試資料包含中、英文。
-- 書面報告與程式碼表現佔20%，考量程式執行效率、回覆速度，以及答案是否過於冗長。
+﻿期末專題的評分比例為80%測資準確度和20%書面報告與程式碼。
+學習活動至少要完成三次練習。
+"期末考的時間是6月3日（三）14:10 ~ 16:00，地點是337, 338教室（請參考ilearning公告），範圍是C6~C9。"
+老師的 email 是 albert.yang@nchu.edu.tw，助教的 email 是 rogerwu212@gmail.com
+RAG 是 Retrieval-Augmented Generation 的縮寫，由 Retriever 和 Generator 兩部分組成。
+RAG相比於僅微調模型，具有即時更新知識的能力，無需重新訓練整個模型，並且可以查資料再生成答案，提高靈活性和成本效益。
+"Transformer 比 RNN 更適合處理長距離依賴的原因包括：
+1. Transformer 使用注意力機制，可以同時處理整個序列的所有元素，而不需要依賴前一個輸出。
+2. 透過相對位置編碼，Transformer 能學到詞之間的動態關係，而不僅僅是固定的位置關係。"
+"Text-to-SQL 是一種自然語言處理技術，將使用者的自然語言轉換為結構化的 SQL 查詢。它讓非技術使用者也能輕鬆與資料庫互動查詢資料。
 
-書面報告要求第一頁放上組員學號、姓名，內容需包含方法、資料來源、討論等部分。此外，資料處理方面需要自行收集與課程教材相關之訓練/測試資料集，且輸入與輸出格式統一為.csv檔案。[S1]
-
-期末專題佔總成績的30%。[S5]","自然語言處理期末專題.pdf, p.2; 自然語言處理期末專題.pdf, p.3; 自然語言處理期末專題.pdf, p.1; c0_course_introduction.pdf, p.3; c0_course_introduction.pdf, p.4; c0_course_introduction.pdf, p.5; c9_advanced_nlp_tasks.pdf, p.1; c9_advanced_nlp_tasks.pdf, p.2; c7_QA_system.pdf, p.78; c7_QA_system.pdf, p.79; c5_DL_models.pdf, p.1; c5_DL_models.pdf, p.2"
-學習活動至少要完成幾次？,學習活動至少要完成三次練習 [S2]。,"學習活動說明.pdf, p.2; 學習活動說明.pdf, p.3; 學習活動說明.pdf, p.1; c7_transformer_pt1.pdf, p.25; c7_transformer_pt1.pdf, p.26; c7_transformer_pt1.pdf, p.27; c4_ml_models_pt1.pdf, p.33; c4_ml_models_pt1.pdf, p.34; c4_ml_models_pt1.pdf, p.35; c5_DL_models.pdf, p.1; c5_DL_models.pdf, p.2; c4_ml_models_pt1.pdf, p.36"
-期末考的時間、地點和範圍是什麼？,目前資料中找不到足夠資訊來回答期末考的時間、地點和範圍。[S1]至[S7]提供了期中考的信息，而[S8]至[S12]則主要涉及期末專題的相關信息，未提及期末考試的具体安排。,"c0_course_introduction.pdf, p.3; c0_course_introduction.pdf, p.4; c0_course_introduction.pdf, p.5; c9_advanced_nlp_tasks.pdf, p.1; c9_advanced_nlp_tasks.pdf, p.2; c5_DL_models.pdf, p.1; c5_DL_models.pdf, p.2; 自然語言處理期末專題.pdf, p.1; 自然語言處理期末專題.pdf, p.2; 自然語言處理期末專題.pdf, p.3; c8_text-to-sql.pdf, p.52; c8_text-to-sql.pdf, p.53"
-老師和助教的 email 是什麼？,老師的 email 是 albert.yang@nchu.edu.tw [S2]，助教的 email 是 rogerwu212@gmail.com [S4]。,"c0_course_introduction.pdf, p.2; c0_course_introduction.pdf, p.3; c0_course_introduction.pdf, p.4; c0_course_introduction.pdf, p.1; c6_transformer.pptx.pdf, p.38; c6_transformer.pptx.pdf, p.39; c6_transformer.pptx.pdf, p.40; c0_course_introduction.pdf, p.17; c0_course_introduction.pdf, p.18; c0_course_introduction.pdf, p.19; c1_vector-based_models.pdf, p.9; c1_vector-based_models.pdf, p.10"
-RAG 是什麼？它由哪兩個部分組成？,RAG 是 Retrieval-Augmented Generation 的縮寫，由 Retrieval 和 Generation 兩個部分組成 [S5][S6][S9]。,"自然語言處理期末專題.pdf, p.1; 自然語言處理期末專題.pdf, p.2; 自然語言處理期末專題.pdf, p.3; c7_QA_system.pdf, p.53; c7_QA_system.pdf, p.54; c7_QA_system.pdf, p.55; c7_QA_system.pdf, p.56; c7_QA_system.pdf, p.14; c7_QA_system.pdf, p.15; c7_QA_system.pdf, p.16; c7_QA_system.pdf, p.73; c7_QA_system.pdf, p.74"
-Why do we need RAG instead of only fine-tuning?,"We need RAG instead of only fine-tuning because:
-
-1. **RAG can be updated more easily** compared to fine-tuning, which requires retraining the entire model or part of it [S2]。
-2. **RAG allows for real-time knowledge updates**, whereas fine-tuning is costly and inflexible as it needs significant GPU resources and time, and requires manual data cleaning and annotation [S6]。
-3. **RAG enables querying external data sources** to generate answers based on the latest information, rather than relying solely on pre-trained data [S7]。
-
-Fine-tuning can lead to severe hallucination issues when dealing with questions outside the training data scope or outdated knowledge [S5]。While RAG can still have retrieval errors leading to hallucinations [S4]，it generally provides a more flexible and cost-effective solution for maintaining up-to-date information without retraining the entire model [S6, S7]。","c7_QA_system.pdf, p.53; c7_QA_system.pdf, p.54; c7_QA_system.pdf, p.55; c7_QA_system.pdf, p.56; c7_QA_system.pdf, p.16; c7_QA_system.pdf, p.17; c7_QA_system.pdf, p.18; c2_probabilistic_models.pdf, p.25; c2_probabilistic_models.pdf, p.26; c2_probabilistic_models.pdf, p.27; c3_article_spinner_and_cipher_decryption.pdf, p.21; c3_article_spinner_and_cipher_decryption.pdf, p.22"
-Transformer 為什麼比 RNN 更適合處理長距離依賴？,"Transformer相比RNN更適合處理長距離依賴的原因如下：
-
-1. **梯度消失和梯度爆炸問題** [S2]：RNN容易遇到梯度消失或梯度爆炸問題，使得模型難以捕捉序列中長距離詞之間的依賴關係。而Transformer使用注意力機制，可以同時處理整個序列的所有元素。
-
-2. **並行處理能力** [S2]：RNN需要依次計算每個時間步的輸出，無法進行並行計算；而Transformer允許所有位置的計算都可以並行進行，提高了效率。
-
-3. **注意力機制** [S2, S11]：Transformer使用注意力機制，可以同時處理整個序列的所有元素，直接關注序列中任意兩個位置之間的關係，無論距離多遠。這使得它能更好地捕捉長距離關係。
-
-4. **固定長度文本處理限制** [S6-S9]：傳統Transformer一次只能處理一段固定長度的文本，而Transformer-XL通過分段遞迴機制和相對位置編碼解決了這個問題，使其能夠處理更長的序列。","c7_transformer_pt1.pdf, p.3; c7_transformer_pt1.pdf, p.4; c7_transformer_pt1.pdf, p.5; c7_transformer_pt1.pdf, p.2; c7_transformer_pt1.pdf, p.52; c7_transformer_pt1.pdf, p.53; c7_transformer_pt1.pdf, p.54; c7_transformer_pt1.pdf, p.55; c7_transformer_pt1.pdf, p.56; c7_transformer_pt1.pdf, p.57; c7_transformer_pt1.pdf, p.6; c7_transformer_pt1.pdf, p.13"
-Text-to-SQL 是什麼？它想解決什麼問題？,"Text-to-SQL 是一種將自然語言問題轉換為SQL查詢的方法，旨在解決LLM在Text-to-SQL任務上的表現不如Fine-tune模型的問題 [S2]。
-
-研究主要探討了以下幾個方面：
-- 通過In-Context-Learning（ICL）讓現有LLM直接應用於Text-to-SQL任務，而不需進行大量微調，提高效率和彈性 [S1, S6]。
-- 提出分解大任務為小任務的方法，提升推理能力 [S2, S11]。
-- 面對資料庫欄位關係不清晰的問題，提出了M-Schema來表示資料庫結構 [S5, S10]。
-
-Text-to-SQL的挑戰包括需要大量範例、處理成本高以及可擴展性限制等 [S3]。研究還提出了一些解決方案，如使用多種模型生成結果再整合，以及在ICL中引入Skeleton Similarity策略來減少對entity的影響 [S5, S6]。
-
-目前資料中找不到足夠資訊關於Text-to-SQL的具體應用案例或特定工具。","c8_text-to-sql.pdf, p.34; c8_text-to-sql.pdf, p.35; c8_text-to-sql.pdf, p.41; c8_text-to-sql.pdf, p.42; c8_text-to-sql.pdf, p.43; c8_text-to-sql.pdf, p.40; c8_text-to-sql.pdf, p.26; c8_text-to-sql.pdf, p.27; c8_text-to-sql.pdf, p.28; c8_text-to-sql.pdf, p.44; c8_text-to-sql.pdf, p.37; c8_text-to-sql.pdf, p.4"
-NER 會遇到哪些挑戰？,"NER會遇到以下挑戰：
-
-1. 有些實體會跨越多個詞元（例如“Steve”和“jobs”）[S1]
-2. 同一個詞在不同語境下可能代表不同實體類別（ex: ""Apple""是公司還是水果）[S1]
-3. 中文等語言沒有空格切詞，斷詞會影響準確性[S1]
-4. 新詞（如新興企業、人名）難以預測[S1]
-5. 資料高度不平衡（大多數詞元都被標記為 “O”）[S1]
-
-這些挑戰也反映了NER模型的複雜性和技術挑戰。例如，需要結合上下文語意來提高準確性，這也是BERT類模型效果較好的原因之一[S2]。此外，NER是資訊抽取任務的核心，可以擴展為細分實體和領域特定實體[S9][S10]。","c9_advanced_nlp_tasks.pdf, p.4; c9_advanced_nlp_tasks.pdf, p.5; c9_advanced_nlp_tasks.pdf, p.6; c9_advanced_nlp_tasks.pdf, p.13; c9_advanced_nlp_tasks.pdf, p.14; c9_advanced_nlp_tasks.pdf, p.15; c9_advanced_nlp_tasks.pdf, p.3; c9_advanced_nlp_tasks.pdf, p.10; c9_advanced_nlp_tasks.pdf, p.11; c9_advanced_nlp_tasks.pdf, p.12; c8_text-to-sql.pdf, p.52; c8_text-to-sql.pdf, p.53"
-ALBERT 相比 BERT 主要用了哪些方法來減少模型大小？,"ALBERT相比BERT主要用了以下方法來減少模型大小：
-1. 參數共享 (Parameter Sharing) [S1]，ALBERT在所有Transformer層之間實現參數共享。
-2. 嵌入矩陣分解（Embedding Factorization）[S1]，將詞嵌入矩陣分解為兩個較小的矩陣：一個維度較小的詞嵌入矩陣和一個投影矩陣。
-3. 句子順序預測（SOP, Sentence Order Prediction）[S1]，改用SOP任務來替代BERT的Next Sentence Prediction（NSP）任務。","c6_transformer.pptx.pdf, p.1; c6_transformer.pptx.pdf, p.2; c6_transformer.pptx.pdf, p.10; c6_transformer.pptx.pdf, p.11; c6_transformer.pptx.pdf, p.12; c6_transformer.pptx.pdf, p.13; c6_transformer.pptx.pdf, p.3; c6_transformer.pptx.pdf, p.4; c7_transformer_pt1.pdf, p.49; c7_transformer_pt1.pdf, p.50; c7_transformer_pt1.pdf, p.51; c7_transformer_pt1.pdf, p.37"
+該技術旨在解決以下問題：
+1. 需要大量的範例和高處理成本。
+2. 可擴展性受限，因為成本與速度問題限制了其在大型應用場景中的可能性。
+3. LLM 知識有限，容易受到 entity 影響，需要更好的策略來整合多種模型生成的結果。"
+"NER會遇到以下挑戰：
+1. 有些實體會跨越多個詞元。
+2. 同一個詞在不同語境下可能代表不同實體類別。
+3. 中文等語言沒有空格切詞，斷詞會影響準確性。
+4. 新詞難以預測。
+5. 資料高度不平衡。"
+"ALBERT 相比 BERT 主要用了以下方法來減少模型大小：
+1. 參數共享
+2. 嵌入矩陣分解
+3. 句子順序預測（SOP）"
