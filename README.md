@@ -33,16 +33,22 @@ $env:OLLAMA_HOST="http://localhost:11434"
 ```
 
 ## 安裝環境
-建立虛擬環境
+建立虛擬環境，請安裝python=3.13
 ```powershell
 python -m venv venv
 ```
 
-建立並啟用虛擬環境後，安裝套件：
+建立並啟用虛擬環境後，安裝一般套件(沒有cuda環境)：
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
+
+若有GPU，建議安裝以下環境，可使用cuda加速
+```powershell
+python -m pip install -r requirements-cuda.txt
+```
+
 
 安裝並啟動 Ollama 後，下載模型：
 
