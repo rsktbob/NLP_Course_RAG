@@ -49,6 +49,15 @@ python -m pip install -r requirements.txt
 python -m pip install -r requirements-cuda.txt
 ```
 
+請先至 Ollama 官方網站下載並安裝 Ollama：
+
+https://ollama.com/download
+
+安裝並啟動 Ollama 後，請先確認 Ollama 服務是否正常運行。Ollama 預設會使用 `11434` Port，可透過以下指令確認：
+
+```powershell
+curl http://localhost:11434/api/tags
+```
 
 安裝並啟動 Ollama 後，下載模型：
 
